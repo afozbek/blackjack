@@ -96,9 +96,7 @@ const Blackjack = () => {
 
   useEffect(() => {
     if (dealerDeck.length > 0) {
-      if (currentGameStatus !== GameStatus.DealerStayed) {
-        //
-
+      if (currentGameStatus === GameStatus.DealerStayed) {
         const value = getTotalValueOfDeck(dealerDeck);
         setTotalValueOfDealer(value);
 
@@ -216,9 +214,23 @@ const Blackjack = () => {
     const card = currentDeck[0];
     const filteredDeck = currentDeck.filter((_, i) => i !== 0);
     const newPlayerDeck = [...playerDeck, { ...card }];
+    console.log("Log: Player Hit");
     setPlayerDeck(newPlayerDeck);
     setCurrentDeck(filteredDeck);
 
+    if (playerDeck.length > 0) {
+      const value = getTotalValueOfDeck(newPlayerDeck);
+      setTotalValueOfPlayer(value);
+
+      if (value > BLACKJACK_NUMBER) {
+        setCurrentGameStatus(GameStatus.PlayerBusted);
+        console.log("-----PLAYER BUSTED!!!-----");
+
+        return;
+      }
+    }
+
+    // If player not busted hit dealer
     handleHitDealer();
   };
 
@@ -231,21 +243,13 @@ const Blackjack = () => {
     const card = currentDeck[0];
     const filteredDeck = currentDeck.filter((_, i) => i !== 0);
     const newDealerDeck = [...dealerDeck, { ...card }];
-
+    console.log("Log: Dealer Hit");
     setDealerDeck(newDealerDeck);
     setCurrentDeck(filteredDeck);
   };
 
-  const getTotalValueOfDeck = (deck: Card[]) => {
-    return deck.reduce((acc, card) => {
-      const amount = FaceTypeToValue[card.face];
-      console.log({ amount });
-
-      return amount + acc;
-    }, 0);
-  };
-
   const handleStayPlayer = () => {
+    console.log("Log: Player Stayed");
     setCurrentGameStatus(GameStatus.PlayerStayed);
 
     let currentDealerValue = totalValueOfDealer;
@@ -263,6 +267,7 @@ const Blackjack = () => {
 
     setDealerDeck(newDealerDeck);
     setCurrentDeck(filteredDeck);
+    console.log("Log: Dealer Stayed");
     setCurrentGameStatus(GameStatus.DealerStayed);
   };
 
@@ -304,6 +309,13 @@ const Blackjack = () => {
     }
 
     return true;
+  };
+  const getTotalValueOfDeck = (deck: Card[]) => {
+    return deck.reduce((acc, card) => {
+      const amount = FaceTypeToValue[card.face];
+
+      return amount + acc;
+    }, 0);
   };
 
   return (
