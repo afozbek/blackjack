@@ -84,13 +84,12 @@ const Blackjack = () => {
 
   useEffect(() => {
     if (playerDeck.length > 0) {
-      const value = getTotalValueOfDeck(playerDeck);
-      setTotalValueOfPlayer(value);
-
-      if (value > BLACKJACK_NUMBER) {
-        setCurrentGameStatus(GameStatus.PlayerBusted);
-        console.log("-----PLAYER BUSTED!!!-----");
-      }
+      // const value = getTotalValueOfDeck(playerDeck);
+      // setTotalValueOfPlayer(value);
+      // if (value > BLACKJACK_NUMBER) {
+      //   setCurrentGameStatus(GameStatus.PlayerBusted);
+      //   console.log("-----PLAYER BUSTED!!!-----");
+      // }
     }
   }, [playerDeck]);
 
@@ -163,6 +162,7 @@ const Blackjack = () => {
     }
 
     setGameResultInfo(gameResultInfo);
+    console.log({ gameResultInfo });
   };
 
   const handlePrepareDecks = () => {
