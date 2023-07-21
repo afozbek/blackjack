@@ -22,11 +22,22 @@ const FaceTypeToValue = {
   A: 11,
 };
 
+enum PlayerType {
+  Dealer = "Dealer",
+  Player = "Player",
+}
+
 enum GameStatus {
   Started = "Start",
-  Stayed = "Stayed",
-  Busted = "Busted",
+  DealerStayed = "DealerStayed",
+  PlayerStayed = "PlayerStayed",
+  DealerBusted = "DealerBusted",
+  PlayerBusted = "PlayerBusted",
+  PlayerWon = "PlayerWon",
+  DealerWon = "DealerWon",
+  CalculateWinner = "CalculateWinner",
   Empty = "Empty",
+  Draw = "Draw",
 }
 
 const deckFaces = [
@@ -65,6 +76,8 @@ const Blackjack = () => {
   const [totalValueOfPlayer, setTotalValueOfPlayer] = useState(0);
   const [totalValueOfDealer, setTotalValueOfDealer] = useState(0);
 
+  const [gameResultInfo, setGameResultInfo] = useState({});
+
   useEffect(() => {
     handlePrepareDecks();
   }, []);
@@ -75,18 +88,84 @@ const Blackjack = () => {
       setTotalValueOfPlayer(value);
 
       if (value > BLACKJACK_NUMBER) {
-        setCurrentGameStatus(GameStatus.Busted);
+        setCurrentGameStatus(GameStatus.PlayerBusted);
+        console.log("-----PLAYER BUSTED!!!-----");
       }
     }
   }, [playerDeck]);
 
   useEffect(() => {
     if (dealerDeck.length > 0) {
+      if (currentGameStatus !== GameStatus.DealerStayed) {
+        //
+
+        const value = getTotalValueOfDeck(dealerDeck);
+        setTotalValueOfDealer(value);
+
+        if (value > BLACKJACK_NUMBER) {
+          setCurrentGameStatus(GameStatus.DealerBusted);
+          console.log("-----DEALER BUSTED!!!-----");
+        } else {
+          setCurrentGameStatus(GameStatus.CalculateWinner);
+        }
+
+        return;
+      }
+
       const filteredDeck = dealerDeck.filter((_, i) => i !== 0);
+
       const value = getTotalValueOfDeck(filteredDeck);
       setTotalValueOfDealer(value);
+
+      if (value > BLACKJACK_NUMBER) {
+        setCurrentGameStatus(GameStatus.DealerBusted);
+        console.log("-----DEALER BUSTED!!!-----");
+      }
     }
   }, [dealerDeck]);
+
+  useEffect(() => {
+    handleManageGameStatus(currentGameStatus);
+  }, [currentGameStatus]);
+
+  const handleManageGameStatus = (gameStatus) => {
+    let gameResultInfo = {};
+    switch (gameStatus) {
+      case GameStatus.DealerBusted:
+      case GameStatus.PlayerWon:
+        gameResultInfo = { winner: PlayerType.Player, deck: playerDeck };
+        break;
+
+      case GameStatus.DealerWon:
+      case GameStatus.PlayerBusted:
+        gameResultInfo = { winner: PlayerType.Dealer, deck: dealerDeck };
+        break;
+
+      case GameStatus.CalculateWinner:
+        if (totalValueOfDealer > totalValueOfPlayer) {
+          console.log("-----DEALER WON WITH HIGH VALUE!!!-----");
+          setCurrentGameStatus(GameStatus.DealerWon);
+        } else if (totalValueOfPlayer > totalValueOfDealer) {
+          console.log("-----PLAYER WON WITH HIGH VALUE!!!-----");
+          setCurrentGameStatus(GameStatus.PlayerWon);
+        } else {
+          console.log("-----DRAW!!!-----");
+          setCurrentGameStatus(GameStatus.Draw);
+        }
+        break;
+
+      case GameStatus.Draw:
+        gameResultInfo = { draw: true, deck: playerDeck };
+        break;
+      case GameStatus.PlayerStayed:
+        break;
+
+      case GameStatus.Started:
+        break;
+    }
+
+    setGameResultInfo(gameResultInfo);
+  };
 
   const handlePrepareDecks = () => {
     const decks = getNumberOfDecksToPlay(NUMBER_OF_DECKS_REQUIRED);
@@ -139,6 +218,22 @@ const Blackjack = () => {
     const newPlayerDeck = [...playerDeck, { ...card }];
     setPlayerDeck(newPlayerDeck);
     setCurrentDeck(filteredDeck);
+
+    handleHitDealer();
+  };
+
+  const handleHitDealer = () => {
+    if (totalValueOfDealer >= 17) {
+      // Dealer cannot hit after 17
+      return;
+    }
+
+    const card = currentDeck[0];
+    const filteredDeck = currentDeck.filter((_, i) => i !== 0);
+    const newDealerDeck = [...dealerDeck, { ...card }];
+
+    setDealerDeck(newDealerDeck);
+    setCurrentDeck(filteredDeck);
   };
 
   const getTotalValueOfDeck = (deck: Card[]) => {
@@ -151,7 +246,24 @@ const Blackjack = () => {
   };
 
   const handleStayPlayer = () => {
-    setCurrentGameStatus(GameStatus.Stayed);
+    setCurrentGameStatus(GameStatus.PlayerStayed);
+
+    let currentDealerValue = totalValueOfDealer;
+    const hittedCardsByDealer = [];
+    let i = 0;
+    while (currentDealerValue < 17) {
+      const card = currentDeck[i];
+      currentDealerValue += getTotalValueOfDeck([{ ...card }]);
+      hittedCardsByDealer.push(card);
+      i++;
+    }
+
+    const filteredDeck = currentDeck.filter((_, index) => index >= i);
+    const newDealerDeck = [...dealerDeck, ...hittedCardsByDealer];
+
+    setDealerDeck(newDealerDeck);
+    setCurrentDeck(filteredDeck);
+    setCurrentGameStatus(GameStatus.DealerStayed);
   };
 
   const handlePrepareGame = () => {
@@ -183,7 +295,12 @@ const Blackjack = () => {
 
   const shouldDealerCardDisplayed = (i) => {
     if (i === 0) {
-      return [GameStatus.Busted, GameStatus.Stayed].includes(currentGameStatus);
+      return [
+        GameStatus.DealerBusted,
+        GameStatus.PlayerBusted,
+        GameStatus.PlayerStayed,
+        GameStatus.DealerStayed,
+      ].includes(currentGameStatus);
     }
 
     return true;
@@ -226,17 +343,25 @@ const Blackjack = () => {
         <div className="actions">
           <button
             onClick={handleHitPlayer}
-            disabled={[GameStatus.Busted, GameStatus.Stayed].includes(
-              currentGameStatus
-            )}
+            disabled={[
+              GameStatus.DealerBusted,
+              GameStatus.PlayerBusted,
+              GameStatus.DealerStayed,
+              GameStatus.PlayerStayed,
+              GameStatus.Empty,
+            ].includes(currentGameStatus)}
           >
             Hit
           </button>
           <button
             onClick={handleStayPlayer}
-            disabled={[GameStatus.Busted, GameStatus.Stayed].includes(
-              currentGameStatus
-            )}
+            disabled={[
+              GameStatus.DealerBusted,
+              GameStatus.PlayerBusted,
+              GameStatus.DealerStayed,
+              GameStatus.PlayerStayed,
+              GameStatus.Empty,
+            ].includes(currentGameStatus)}
           >
             Stay
           </button>
