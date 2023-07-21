@@ -1,0 +1,32 @@
+.container {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.game {
+  width: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  .deck {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .card {
+      margin-right: 3px;
+      border: 1px solid #ccc;
+      padding: 10px 5px;
+
+      // &.hidden {
+      //   display: none;
+      // }
+    }
+  }
+}
