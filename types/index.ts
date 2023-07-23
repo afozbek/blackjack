@@ -29,3 +29,18 @@ export enum CardTypes {
   Hearts = "Hearts",
   Spades = "Spades",
 }
+
+export interface Round {
+  // Define the properties of your round object here
+  condition: RoundCondition;
+  deck: Deck;
+  // Add more properties as needed
+}
+
+export enum RoundCondition {
+  PlayerWon = "PlayerWon",
+  DealerWon = "DealerWon",
+  Draw = "Draw",
+}
+
+type Deck = Card[];

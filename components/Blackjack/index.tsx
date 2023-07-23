@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardTypes, GameStatus, PlayerType } from "../../types";
+import {
+  Card,
+  CardTypes,
+  GameStatus,
+  PlayerType,
+  Round,
+  RoundCondition,
+} from "../../types";
 import RoundCountdown from "./RoundCountdown";
+import axios from "axios";
 
 const FaceTypeToValue = {
   "2": 2,
@@ -52,13 +60,16 @@ const Blackjack = (props: BlackjackProps) => {
 
   const [totalValueOfPlayer, setTotalValueOfPlayer] = useState(0);
   const [totalValueOfDealer, setTotalValueOfDealer] = useState(0);
+  const [scoreBoard, setScoreBoard] = useState<Round[]>([]);
 
   const [gameResultInfo, setGameResultInfo] = useState({});
 
   const { playerName, delay } = props;
+  axios.defaults.headers.post["Content-Type"] = "application/json";
 
   useEffect(() => {
     handlePrepareDecks();
+    showScoreboard();
   }, []);
 
   useEffect(() => {}, [playerDeck]);
@@ -102,12 +113,14 @@ const Blackjack = (props: BlackjackProps) => {
       case GameStatus.PlayerWon:
         gameResultInfo = { winner: PlayerType.Player, deck: playerDeck };
         setCurrentGameStatus(GameStatus.Finished);
+        sendScore(RoundCondition.PlayerWon, playerDeck);
         break;
 
       case GameStatus.DealerWon:
       case GameStatus.PlayerBusted:
         gameResultInfo = { winner: PlayerType.Dealer, deck: dealerDeck };
         setCurrentGameStatus(GameStatus.Finished);
+        sendScore(RoundCondition.DealerWon, dealerDeck);
         break;
 
       case GameStatus.CalculateWinner: {
@@ -125,12 +138,14 @@ const Blackjack = (props: BlackjackProps) => {
           setCurrentGameStatus(GameStatus.Draw);
         }
 
+        showScoreboard();
         break;
       }
 
       case GameStatus.Draw:
         gameResultInfo = { draw: true, deck: playerDeck };
         setCurrentGameStatus(GameStatus.Finished);
+        sendScore(RoundCondition.Draw, playerDeck);
         break;
 
       case GameStatus.PlayerStayed:
@@ -341,7 +356,23 @@ const Blackjack = (props: BlackjackProps) => {
     setCurrentGameStatus(GameStatus.CalculateWinner);
   };
 
-  console.log({ playerName });
+  const showScoreboard = async () => {
+    const result = await axios.get("http://localhost:8080/getScores");
+    const newScoreBoard = result.data.scoreBoard;
+    console.log({ result });
+    setScoreBoard(newScoreBoard);
+  };
+
+  const sendScore = async (condition: RoundCondition, deck: Card[]) => {
+    // axios.defaults.headers.post["Content-Type"] = "application/json";
+    const result = await axios.post("http://localhost:8080/submitScore", {
+      condition: condition,
+      deck: deck,
+    } as Round);
+
+    console.log({ result });
+  };
+
   return (
     <div className="container">
       <div className="game">
