@@ -9,6 +9,7 @@ import {
 } from "../../types";
 import RoundCountdown from "./RoundCountdown";
 import axios from "axios";
+import Scoreboard from "./Scoreboard";
 
 const FaceTypeToValue = {
   "2": 2,
@@ -113,14 +114,14 @@ const Blackjack = (props: BlackjackProps) => {
       case GameStatus.PlayerWon:
         gameResultInfo = { winner: PlayerType.Player, deck: playerDeck };
         setCurrentGameStatus(GameStatus.Finished);
-        sendScore(RoundCondition.PlayerWon, playerDeck);
+        sendScore(RoundCondition.PlayerWon, playerDeck, totalValueOfPlayer);
         break;
 
       case GameStatus.DealerWon:
       case GameStatus.PlayerBusted:
         gameResultInfo = { winner: PlayerType.Dealer, deck: dealerDeck };
         setCurrentGameStatus(GameStatus.Finished);
-        sendScore(RoundCondition.DealerWon, dealerDeck);
+        sendScore(RoundCondition.DealerWon, dealerDeck, totalValueOfDealer);
         break;
 
       case GameStatus.CalculateWinner: {
@@ -145,7 +146,7 @@ const Blackjack = (props: BlackjackProps) => {
       case GameStatus.Draw:
         gameResultInfo = { draw: true, deck: playerDeck };
         setCurrentGameStatus(GameStatus.Finished);
-        sendScore(RoundCondition.Draw, playerDeck);
+        sendScore(RoundCondition.Draw, playerDeck, totalValueOfPlayer);
         break;
 
       case GameStatus.PlayerStayed:
@@ -363,14 +364,19 @@ const Blackjack = (props: BlackjackProps) => {
     setScoreBoard(newScoreBoard);
   };
 
-  const sendScore = async (condition: RoundCondition, deck: Card[]) => {
+  const sendScore = async (
+    condition: RoundCondition,
+    deck: Card[],
+    score: number
+  ) => {
     // axios.defaults.headers.post["Content-Type"] = "application/json";
     const result = await axios.post("http://localhost:8080/submitScore", {
       condition: condition,
       deck: deck,
+      score,
     } as Round);
 
-    console.log({ result });
+    setScoreBoard(result.data.scoreBoard);
   };
 
   return (
@@ -443,6 +449,11 @@ const Blackjack = (props: BlackjackProps) => {
           delay={delay}
           handleRoundTimerEnd={handleRoundTimerEnd}
         />
+      ) : null}
+
+      {/* Previous Scores */}
+      {currentGameStatus === GameStatus.Finished ? (
+        <Scoreboard scoreBoard={scoreBoard} />
       ) : null}
     </div>
   );

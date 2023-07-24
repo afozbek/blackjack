@@ -31,10 +31,9 @@ export enum CardTypes {
 }
 
 export interface Round {
-  // Define the properties of your round object here
   condition: RoundCondition;
   deck: Deck;
-  // Add more properties as needed
+  score: number;
 }
 
 export enum RoundCondition {

@@ -6,28 +6,32 @@
   transform: translate(-50%, -50%);
 }
 
+.header {
+  text-align: center;
+}
+
 .game {
   width: 500px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
 
-  .deck {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
+.deck {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
 
-    .card {
-      margin-right: 3px;
-      border: 1px solid #ccc;
-      padding: 10px 5px;
+  .card {
+    margin-right: 3px;
+    border: 1px solid #ccc;
+    padding: 10px 5px;
 
-      // &.hidden {
-      //   display: none;
-      // }
-    }
+    // &.hidden {
+    //   display: none;
+    // }
   }
 }
 
